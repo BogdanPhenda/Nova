@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from aiobotocore.session import get_session
 
-class S3Client:
+class S3AsyncClient:
     def __init__(self, access_key: str, secret_key: str, endpoint_url_base: str, bucket_name: str, public_endpoint: str = None):
         self.bucket_name = bucket_name
         self.endpoint_url = f"https://{endpoint_url_base}"  # S3 API endpoint

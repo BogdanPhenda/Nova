@@ -1,42 +1,58 @@
-import logging
-# Отключаем подробные логи httpx и других сторонних библиотек
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("aiobotocore").setLevel(logging.WARNING)
-logging.getLogger("telegram").setLevel(logging.WARNING)
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
-from dotenv import load_dotenv
 import os
-from functools import partial
-from s3_async_client import S3Client
-from bot.handlers import start, handle_document, getfeed, getallfeed, help_command, greeting_handler, fallback_handler, menu_handler, inline_menu_callback, GREETINGS
+import logging
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    filters
+)
+from dotenv import load_dotenv
 
+from bot.handlers import (
+    start,
+    menu_handler,
+    handle_document,
+    validate_file,
+    getfeed,
+    getallfeed,
+    help_command,
+    error_handler
+)
 
-def run_bot(feed_url=None):
-    load_dotenv()
-    TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-    SAVE_DIR = 'uploads'
-    os.makedirs(SAVE_DIR, exist_ok=True)
-    logging.basicConfig(level=logging.INFO)
+# Загружаем переменные окружения
+load_dotenv()
 
-    S3_ENDPOINT = os.getenv('S3_ENDPOINT')
-    S3_ACCESS_KEY = os.getenv('S3_ACCESS_KEY')
-    S3_SECRET_KEY = os.getenv('S3_SECRET_KEY')
-    S3_BUCKET = os.getenv('S3_BUCKET')
-    S3_BASE = S3_ENDPOINT.replace('https://', '').replace('http://', '')
-    S3_PUBLIC_ENDPOINT = os.getenv('S3_PUBLIC_ENDPOINT')
-    s3_client = S3Client(S3_ACCESS_KEY, S3_SECRET_KEY, S3_BASE, S3_BUCKET, S3_PUBLIC_ENDPOINT)
+# Настройка логирования
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(CommandHandler('start', start))
-    app.add_handler(CommandHandler('getfeed', partial(getfeed, s3_client=s3_client)))
-    app.add_handler(CommandHandler('help', help_command))
-    app.add_handler(CommandHandler('getallfeed', partial(getallfeed, s3_client=s3_client)))
-    app.add_handler(MessageHandler(
-        filters.TEXT & filters.Regex(r'(?i)(' + '|'.join(GREETINGS) + ')'),
-        greeting_handler
-    ))
-    app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
-    app.add_handler(MessageHandler(filters.TEXT, fallback_handler))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(r'(?i)^меню$'), menu_handler))
-    app.add_handler(CallbackQueryHandler(partial(inline_menu_callback, s3_client=s3_client)))
-    app.run_polling() 
+def run_bot():
+    """Запускает бота."""
+    # Получаем токен из переменных окружения
+    bot_token = os.getenv('BOT_TOKEN')
+    if not bot_token:
+        raise ValueError("Не задан токен бота (BOT_TOKEN)")
+
+    # Создаем приложение
+    application = Application.builder().token(bot_token).build()
+
+    # Добавляем обработчики команд
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("getfeed", getfeed))
+    application.add_handler(CommandHandler("getallfeed", getallfeed))
+
+    # Добавляем обработчики сообщений
+    application.add_handler(MessageHandler(filters.Document.ALL, handle_document))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, menu_handler))
+
+    # Добавляем обработчик ошибок
+    application.add_error_handler(error_handler)
+
+    logger.info("Бот запущен")
+    
+    # Запускаем бота
+    application.run_polling() 

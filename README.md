@@ -1,47 +1,49 @@
 # Catalog Bot
 
-A Python-based bot for automated catalog management using Google Sheets and XML feed generation.
+Сервис для автоматизации создания и публикации каталогов недвижимости в формате XML-фида.
 
-## Features
+## Возможности
 
-- Automated catalog data processing from Google Sheets
-- XML feed generation for product catalogs
-- S3 storage integration for feed files
-- Asynchronous file handling
-- FastAPI-based web interface
+- Загрузка данных из Excel файлов
+- Автоматическая валидация данных
+- Поддержка иерархической структуры (ЖК → Корпус → Объект)
+- Синхронизация с Google Sheets
+- Генерация XML-фида
+- Загрузка фидов в S3 хранилище
+- Асинхронная обработка файлов
 
-## Prerequisites
+## Требования
 
 - Python 3.8+
 - Google Sheets API credentials
 - AWS S3 credentials
-- Access to required Google Spreadsheets
+- Доступ к Google Spreadsheets
 
-## Installation
+## Установка
 
-1. Clone the repository:
+1. Клонируйте репозиторий:
 ```bash
 git clone <your-repository-url>
 cd catalog-bot2
 ```
 
-2. Create and activate virtual environment:
+2. Создайте и активируйте виртуальное окружение:
 ```bash
 python -m venv venv
-# For Windows
+# Для Windows
 venv\Scripts\activate
-# For Unix/MacOS
+# Для Unix/MacOS
 source venv/bin/activate
 ```
 
-3. Install dependencies:
+3. Установите зависимости:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Set up configuration:
-   - Create `google-credentials.json` with your Google API credentials
-   - Configure environment variables:
+4. Настройте конфигурацию:
+   - Создайте `google-credentials.json` с вашими учетными данными Google API
+   - Настройте переменные окружения:
      ```
      AWS_ACCESS_KEY_ID=your_access_key
      AWS_SECRET_ACCESS_KEY=your_secret_key
@@ -49,35 +51,86 @@ pip install -r requirements.txt
      SPREADSHEET_ID=your_spreadsheet_id
      ```
 
-## Project Structure
+## Структура проекта
 
 ```
 catalog-bot2/
-├── bot/            # Bot core functionality
-├── feed/           # Feed generation logic
-├── google_sheets/  # Google Sheets integration
-├── uploads/        # Temporary storage for generated feeds
-└── s3_async_client.py  # S3 client implementation
+├── bot/            # Основная логика бота
+├── feed/           # Генерация XML фидов
+├── google_sheets/  # Интеграция с Google Sheets
+├── models/         # Модели данных и валидаторы
+├── templates/      # Шаблоны и примеры
+├── uploads/        # Временное хранилище файлов
+└── s3_async_client.py  # Асинхронный клиент S3
 ```
 
-## Usage
+## Использование
 
-1. Start the bot:
+### Подготовка данных
+
+1. Используйте шаблон Excel из директории `templates/`
+2. Заполните все обязательные поля:
+   - `internal_id` - Уникальный идентификатор объекта
+   - `address` - Полный адрес
+   - `price` - Цена объекта
+   - `area_total` - Общая площадь
+
+### Загрузка данных
+
+1. Поместите Excel файл в директорию `uploads/`
+2. Запустите обработку:
 ```bash
 python main.py
 ```
 
-2. The bot will:
-   - Fetch data from configured Google Sheets
-   - Generate XML feed files
-   - Upload feeds to S3 storage
-   - Provide API endpoints for manual operations
+### Структура данных
+
+Система поддерживает иерархическую структуру данных:
+
+```
+ЖК
+└── Корпус 1
+    ├── Квартира 101
+    ├── Квартира 102
+└── Корпус 2
+    ├── Квартира 201
+    └── Квартира 202
+```
+
+## Валидация данных
+
+Система автоматически проверяет:
+1. Наличие обязательных полей
+2. Корректность типов данных
+3. Валидность цен и площадей
+4. Корректность этажности
+5. Доступность изображений
 
 ## API Endpoints
 
-- `GET /health` - Check service health
-- `POST /generate-feed` - Manually trigger feed generation
-- `GET /feeds` - List available feeds
+- `GET /health` - Проверка работоспособности сервиса
+- `POST /generate-feed` - Запуск генерации фида
+- `GET /feeds` - Получение списка доступных фидов
+
+## Разработка
+
+1. Установите зависимости для разработки:
+```bash
+pip install -r requirements-dev.txt
+```
+
+2. Запустите тесты:
+```bash
+pytest
+```
+
+## Рекомендации по использованию
+
+1. Всегда используйте шаблон Excel для подготовки данных
+2. Проверяйте данные перед загрузкой
+3. Следите за уникальностью идентификаторов
+4. Используйте осмысленные названия для корпусов
+5. Добавляйте качественные изображения
 
 ## Contributing
 
