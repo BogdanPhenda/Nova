@@ -1,0 +1,12 @@
+python-telegram-bot
+pandas
+openpyxl
+gspread
+google-auth
+fastapi
+uvicorn
+pyngrok
+python-dotenv 
+boto3 
+aiobotocore
+aiofiles 
