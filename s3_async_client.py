@@ -20,11 +20,33 @@ class S3AsyncClient:
         async with self.session.create_client("s3", **self.config) as client:
             yield client
 
-    async def upload_file(self, file_path: str, object_name: str) -> str:
+    async def upload_file(self, file_or_content: str, object_name: str) -> str:
+        """
+        Загружает файл или содержимое в S3.
+        :param file_or_content: Путь к файлу или содержимое для загрузки
+        :param object_name: Имя объекта в S3
+        :return: Публичный URL загруженного файла
+        """
         async with self.get_client() as client:
             try:
-                with open(file_path, "rb") as f:
-                    await client.put_object(Bucket=self.bucket_name, Key=object_name, Body=f, ACL='public-read', ContentType='application/xml')
+                if os.path.exists(file_or_content):  # Если это путь к файлу
+                    with open(file_or_content, "rb") as f:
+                        await client.put_object(
+                            Bucket=self.bucket_name,
+                            Key=object_name,
+                            Body=f,
+                            ACL='public-read',
+                            ContentType='application/xml'
+                        )
+                else:  # Если это содержимое
+                    await client.put_object(
+                        Bucket=self.bucket_name,
+                        Key=object_name,
+                        Body=file_or_content.encode('utf-8'),
+                        ACL='public-read',
+                        ContentType='application/xml'
+                    )
+
                 # Используем публичный endpoint для ссылки, если он задан
                 if self.public_endpoint:
                     public_url = f"{self.public_endpoint}/{object_name}"
@@ -34,4 +56,18 @@ class S3AsyncClient:
                 return public_url
             except Exception as e:
                 print(f"Ошибка при загрузке файла в S3: {e}")
-                return "" 
+                return ""
+
+    async def delete_file(self, object_name: str) -> bool:
+        """Удаляет файл из S3."""
+        async with self.get_client() as client:
+            try:
+                await client.delete_object(
+                    Bucket=self.bucket_name,
+                    Key=object_name
+                )
+                print(f"Файл '{object_name}' успешно удален из S3")
+                return True
+            except Exception as e:
+                print(f"Ошибка при удалении файла из S3: {e}")
+                return False 

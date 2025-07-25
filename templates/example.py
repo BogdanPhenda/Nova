@@ -1,95 +1,148 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+import random
 
-def create_example_excel():
-    """Создает пример Excel файла с данными о недвижимости."""
-    
-    # Создаем данные для ЖК "Солнечный"
-    data = []
-    
-    # Общие данные о ЖК
-    developer_name = "Строй Инвест"
-    metro_station = "Проспект Вернадского"
-    construction_type = "монолит-кирпич"
-    
-    # Корпус 1
-    for i in range(1, 4):
-        data.append({
-            'internal_id': f'sun1_{i}',
-            'property_type': 'квартира',
-            'category': 'продажа',
-            'address': 'г. Москва, ул. Солнечная, д. 1',
-            'price': 8_500_000 + i * 500_000,
-            'currency': 'RUB',
-            'area_total': 45 + i * 5,
-            'area_living': 30 + i * 3,
-            'area_kitchen': 12 + i,
-            'description': f'Светлая {i+1}-комнатная квартира с отличным видом',
-            'floor': i + 1,
-            'floors_total': 12,
-            'building_name': 'Корпус 1',
+def create_partner_template():
+    """
+    Генерирует шаблон Excel для партнеров с 100 строками тестовых данных и всеми поддерживаемыми полями.
+    price и price_sale идут рядом.
+    """
+    # Определяем порядок полей
+    columns = [
+        'internal_id', 'address', 'property_type', 'category',
+        'area_total', 'area_living', 'area_kitchen',
+        'floor', 'floors_total', 'building_name', 'built_year', 'section',
+        'price', 'price_sale', 'currency',
+        'description', 'windows_view', 'number', 'rooms',
+        'ceiling_height', 'renovation_type', 'balcony_type', 'has_parking',
+        'image_urls', 'metro_station', 'distance_to_metro',
+        'mortgage_available', 'initial_payment',
+        'construction_type', 'elevator_count', 'developer_name'
+    ]
+
+    # Создаем данные для каждого корпуса с одинаковыми параметрами
+    building_data = {
+        'Корпус 1': {
+            'address': 'г. Москва, ул. Тестовая, д. 1',
             'built_year': 2024,
-            'windows_view': 'во двор',
-            'number': f'10{i}',
-            'image_urls': 'https://example.com/img1.jpg,https://example.com/img2.jpg',
-            'rooms': i + 1,
-            'ceiling_height': 2.8,
-            'renovation_type': 'чистовая',
-            'balcony_type': 'лоджия',
-            'has_parking': True,
-            'metro_station': metro_station,
+            'floors_total': 16,
+            'metro_station': 'Проспект Вернадского',
             'distance_to_metro': 800,
-            'mortgage_available': True,
-            'initial_payment': 2_000_000,
-            'construction_type': construction_type,
-            'elevator_count': 2,
-            'developer_name': developer_name
-        })
-    
-    # Корпус 2
-    for i in range(1, 3):
-        data.append({
-            'internal_id': f'sun2_{i}',
-            'property_type': 'квартира',
-            'category': 'продажа',
-            'address': 'г. Москва, ул. Солнечная, д. 2',
-            'price': 12_000_000 + i * 1_000_000,
-            'currency': 'RUB',
-            'area_total': 75 + i * 10,
-            'area_living': 55 + i * 7,
-            'area_kitchen': 15 + i * 2,
-            'description': f'Просторная {i+2}-комнатная квартира с панорамными окнами',
-            'floor': i + 5,
-            'floors_total': 12,
-            'building_name': 'Корпус 2',
+            'construction_type': 'монолит-кирпич',
+            'elevator_count': 2
+        },
+        'Корпус 2': {
+            'address': 'г. Москва, ул. Тестовая, д. 2',
             'built_year': 2024,
-            'windows_view': 'на парк',
-            'number': f'20{i}',
-            'image_urls': 'https://example.com/img3.jpg,https://example.com/img4.jpg',
-            'rooms': i + 2,
-            'ceiling_height': 3.0,
-            'renovation_type': 'без отделки',
-            'balcony_type': 'балкон',
-            'has_parking': True,
-            'metro_station': metro_station,
+            'floors_total': 20,
+            'metro_station': 'Киевская',
+            'distance_to_metro': 1200,
+            'construction_type': 'монолит',
+            'elevator_count': 3
+        },
+        'Корпус 3': {
+            'address': 'г. Москва, ул. Тестовая, д. 3',
+            'built_year': 2023,
+            'floors_total': 12,
+            'metro_station': 'Парк Победы',
+            'distance_to_metro': 1500,
+            'construction_type': 'панель',
+            'elevator_count': 2
+        },
+        'Корпус 4': {
+            'address': 'г. Москва, ул. Тестовая, д. 4',
+            'built_year': 2025,
+            'floors_total': 25,
+            'metro_station': 'Проспект Вернадского',
             'distance_to_metro': 950,
-            'mortgage_available': True,
-            'initial_payment': 3_000_000,
-            'construction_type': construction_type,
-            'elevator_count': 3,
+            'construction_type': 'монолит-кирпич',
+            'elevator_count': 4
+        },
+        'Корпус 5': {
+            'address': 'г. Москва, ул. Тестовая, д. 5',
+            'built_year': 2024,
+            'floors_total': 18,
+            'metro_station': 'Киевская',
+            'distance_to_metro': 1100,
+            'construction_type': 'кирпич',
+            'elevator_count': 2
+        }
+    }
+
+    data = []
+    for i in range(1, 101):
+        # Выбираем корпус
+        building_name = f'Корпус {(i-1) % 5 + 1}'
+        building_info = building_data[building_name]
+        
+        # Генерируем данные с учетом ограничений корпуса
+        total_area = round(random.uniform(30, 120), 2)
+        living_area = round(total_area * random.uniform(0.5, 0.8), 2)
+        kitchen_area = round(total_area * random.uniform(0.1, 0.2), 2)
+        price = int(total_area * random.uniform(120_000, 250_000))
+        price_sale = price - random.randint(100_000, 500_000) if random.random() > 0.2 else ''
+        
+        # Этаж не может быть больше общего количества этажей
+        floor = random.randint(1, building_info['floors_total'])
+        
+        section = f'Секция {random.randint(1, 4)}'
+        currency = 'RUB'
+        description = f'Тестовое описание квартиры {i}'
+        windows_view = random.choice(['во двор', 'на парк', 'на улицу'])
+        number = f'{random.randint(1, 20)}{random.randint(1, 9)}{random.randint(0, 9)}'
+        rooms = random.randint(1, 4)
+        ceiling_height = round(random.uniform(2.5, 3.2), 2)
+        renovation_type = random.choice(['чистовая', 'черновая', 'без отделки'])
+        balcony_type = random.choice(['балкон', 'лоджия', 'нет'])
+        has_parking = random.choice([True, False])
+        image_urls = 'https://example.com/img1.jpg,https://example.com/img2.jpg'
+        mortgage_available = random.choice([True, False])
+        initial_payment = random.randint(500_000, 3_000_000)
+        developer_name = random.choice(['Строй Инвест', 'Город Девелопмент', 'Новый Дом'])
+        property_type = 'квартира'
+        category = 'продажа'
+
+        row = {
+            'internal_id': f'test_{i}',
+            'address': building_info['address'],
+            'property_type': property_type,
+            'category': category,
+            'area_total': total_area,
+            'area_living': living_area,
+            'area_kitchen': kitchen_area,
+            'floor': floor,
+            'floors_total': building_info['floors_total'],
+            'building_name': building_name,
+            'built_year': building_info['built_year'],
+            'section': section,
+            'price': price,
+            'price_sale': price_sale,
+            'currency': currency,
+            'description': description,
+            'windows_view': windows_view,
+            'number': number,
+            'rooms': rooms,
+            'ceiling_height': ceiling_height,
+            'renovation_type': renovation_type,
+            'balcony_type': balcony_type,
+            'has_parking': has_parking,
+            'image_urls': image_urls,
+            'metro_station': building_info['metro_station'],
+            'distance_to_metro': building_info['distance_to_metro'],
+            'mortgage_available': mortgage_available,
+            'initial_payment': initial_payment,
+            'construction_type': building_info['construction_type'],
+            'elevator_count': building_info['elevator_count'],
             'developer_name': developer_name
-        })
-    
-    # Создаем DataFrame
-    df = pd.DataFrame(data)
-    
-    # Сохраняем в Excel с форматированием
-    with pd.ExcelWriter('templates/example_catalog.xlsx', engine='openpyxl') as writer:
+        }
+        data.append(row)
+
+    df = pd.DataFrame(data, columns=columns)
+
+    with pd.ExcelWriter('templates/partner_template.xlsx', engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Каталог')
         worksheet = writer.sheets['Каталог']
-        
-        # Форматируем ширину колонок
         for column in worksheet.columns:
             max_length = 0
             column = [cell for cell in column]
@@ -103,4 +156,4 @@ def create_example_excel():
             worksheet.column_dimensions[column[0].column_letter].width = adjusted_width
 
 if __name__ == '__main__':
-    create_example_excel() 
+    create_partner_template() 

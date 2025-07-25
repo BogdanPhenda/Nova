@@ -15,12 +15,12 @@ class ExcelValidator:
     
     REQUIRED_COLUMNS = {
         'internal_id': str,
-        'address': str,
         'price': float,
         'area_total': float,
     }
     
     OPTIONAL_COLUMNS = {
+        'address': str,
         'property_type': str,
         'category': str,
         'area_living': float,
@@ -45,6 +45,8 @@ class ExcelValidator:
         'construction_type': str,
         'elevator_count': int,
         'developer_name': str,
+        'price_sale': float,  # Цена со скидкой
+        'section': str,       # Секция/подъезд
     }
 
     def __init__(self):
@@ -173,7 +175,7 @@ class ExcelValidator:
                     self.errors.append(f"Найдены дубликаты internal_id в корпусе {building}")
 
                 # Добавляем предупреждения о возможных проблемах
-                if building_data['address'].nunique() > 1:
+                if 'address' in df.columns and building_data['address'].nunique() > 1:
                     self.warnings.append(f"В корпусе {building} используется несколько разных адресов")
                 if 'built_year' in df.columns and building_data['built_year'].nunique() > 1:
                     self.warnings.append(f"В корпусе {building} указаны разные года постройки")
@@ -186,7 +188,7 @@ class ExcelValidator:
             try:
                 # Создаем базовые компоненты
                 location = Location(
-                    address=row['address'],
+                    address=row.get('address', ''),
                     country="Россия",
                     metro_station=row.get('metro_station'),
                     distance_to_metro=row.get('distance_to_metro')
@@ -228,7 +230,9 @@ class ExcelValidator:
                     ceiling_height=row.get('ceiling_height'),
                     renovation_type=RenovationType(row['renovation_type']) if pd.notna(row.get('renovation_type')) else None,
                     balcony_type=row.get('balcony_type'),
-                    has_parking=row.get('has_parking')
+                    has_parking=row.get('has_parking'),
+                    price_sale=row.get('price_sale'),
+                    section=row.get('section')
                 )
                 
                 # Определяем корпус

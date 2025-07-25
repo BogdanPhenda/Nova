@@ -29,7 +29,7 @@ class Location(BaseModel):
     region: Optional[str] = None
     city: Optional[str] = None
     district: Optional[str] = None
-    address: str
+    address: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     distance_to_metro: Optional[int] = None  # расстояние до метро в метрах
@@ -106,6 +106,8 @@ class Property(BaseModel):
     renovation_type: Optional[RenovationType] = None
     balcony_type: Optional[str] = None
     has_parking: Optional[bool] = None
+    price_sale: Optional[float] = None  # Цена со скидкой
+    section: Optional[str] = None  # Секция/подъезд
     
     @validator('floor')
     def validate_floor(cls, v, values):
